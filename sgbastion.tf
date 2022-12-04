@@ -4,7 +4,7 @@ module "sgbastion" {
   version = "4.16.2"
 
   name = "sgbastion"
-  description = "Allow self ip to ssh to ‘bastion’ instance and allow all egress."
+  description = "Allow self ip to ssh to bastion instance and allow all egress."
   vpc_id = module.vpc.vpc_id
   # Ingress Rules with Self IP
   ingress_rules = ["ssh-tcp"]

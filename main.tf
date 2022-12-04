@@ -15,6 +15,11 @@ terraform {
   }
 }
 
+# Get Self IP from ICANHAZIP
+data "http" "myip" {
+  url = "http://ipv4.icanhazip.com"
+}
+
 # AWS Provider
 provider "aws" {
   # Configuration options

@@ -1,6 +1,6 @@
 [servers]
-jenkins ansible_host=10.0.101.229
-app ansible_host=10.0.2.11 
+jenkins ansible_host=10.0.101.229 ansible_ssh_user=ubuntu ansible_ssh_private_key_file=../Upgrad_NEW.pem
+app ansible_host=10.0.2.11 ansible_ssh_user=ubuntu ansible_ssh_private_key_file=../Upgrad_NEW.pem
 
 [all:vars]
 ansible_python_interpreter=/usr/bin/python3

@@ -1,0 +1,200 @@
+---
+- hosts: 
+    - jenkins
+    - app
+  become: true
+
+  tasks:
+    - name: Install aptitude
+      apt:
+        name: aptitude
+        state: latest
+        update_cache: true
+
+    - name: Install pre-requisite system packages
+      apt:
+        pkg:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+          - python3-pip
+          - virtualenv
+          - python3-setuptools
+          - awscli
+          - openjdk-11-jre
+        state: latest
+        update_cache: true
+
+    - name: Add Docker GPG Key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker Repository
+      apt_repository:
+        repo: deb https://download.docker.com/linux/ubuntu focal stable
+        state: present
+
+    - name: Update apt and install docker-ce
+      apt:
+        pkg:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-compose-plugin
+        state: latest
+        update_cache: true
+ 
+    - name: Ensure docker deamon is running
+      service:
+        name: docker
+        state: started
+        enabled: true
+- hosts:
+    - jenkins
+  become: true
+
+  tasks:
+    
+    - name: ensure the jenkins apt repository key is installed
+      apt_key: 
+        url: https://pkg.jenkins.io/debian-stable/jenkins.io.key
+        state: present
+
+    - name: ensure the repository is configured
+      apt_repository: 
+        repo: 'deb https://pkg.jenkins.io/debian-stable binary/'
+        state: present
+
+    - name: Install aptitude
+      apt:
+        name: aptitude
+        state: latest
+        update_cache: true
+
+    - name: Update and upgrade apt packages
+      apt:
+        upgrade: true
+        update_cache: true
+
+    - name: Install git on jenkins
+      apt:
+        pkg:
+          - jenkins
+          - git
+        state: latest
+        update_cache: true
+
+    - name: Ensure Systemd directory to edit jenkins prefix /jenkins is there
+      file: 
+        path: /etc/systemd/system/jenkins.service.d
+        state: directory
+
+    - name: setup Jenkins system override file for /jenkins prefix
+      copy:
+        dest: /etc/systemd/system/jenkins.service.d/override.conf
+        content: |
+          [Service]
+          Environment="JENKINS_PREFIX=/jenkins"
+
+    - name: restart jenkins service and reload daemon
+      systemd:
+        name: jenkins
+        daemon_reload: true
+        state: restarted
+
+- hosts: 
+  - jenkins
+  vars:
+    ssh_key_filename: id_rsa_jenkins
+
+  tasks:
+    - name: Set Jenkins hostname on Jenkins EC2 instance
+      hostname: 
+        name: jenkins
+
+    - name: Make jenkins user a sudoer without needing password
+      copy: 
+        content: "jenkins    ALL=(ALL) NOPASSWD:ALL" 
+        dest: /etc/sudoers.d/jenkins_sudo
+      
+    - name: generate SSH key "{{ssh_key_filename}}"
+      openssh_keypair:
+        path: "~/.ssh/{{ssh_key_filename}}"
+        type: rsa
+        size: 4096
+        state: present
+        force: no
+
+    - name: Check if ssh directory is there in jenkins home directory.
+      stat:
+        path: /var/lib/jenkins/.ssh
+      register: ssh_folder
+
+    - name: "Create ssh directory if not exists under jenkins home"
+      file:
+        path: /var/lib/jenkins/.ssh
+        state: directory
+        mode: 0700
+        group: jenkins
+        owner: jenkins
+      when: ssh_folder.stat.exists == false 
+
+    - name: copy root private key to jenkins ssh dir
+      copy:
+        remote_src: true
+        src: '/root/.ssh/id_rsa_jenkins'
+        dest: '/var/lib/jenkins/.ssh/id_rsa_jenkins'
+        mode: 0600
+        owner: jenkins
+        group: jenkins
+
+    - name: get content of remote file
+      fetch:
+        src: '/root/.ssh/id_rsa_jenkins.pub'
+        dest: 'id_rsa_jenkins.pub' 
+        flat: yes
+
+- hosts:
+    - app
+  tasks:
+    - name: decode remote content
+      set_fact:
+        pubkey_jenkins: "{{ lookup('file', 'id_rsa_jenkins.pub' ) }}"
+
+    - name: Set app hostname on app EC2 instance
+      hostname: 
+        name: app
+
+    - name:
+      lineinfile:
+        path: /root/.ssh/authorized_keys
+        regexp: ' id_rsa_jenkins'
+        line: "{{ pubkey_jenkins }} id_rsa_jenkins"
+
+
+- hosts: 
+    - app
+    - jenkins
+  tasks:
+    - name: "generate /etc/hosts.ansible file"
+      template: 
+        src: hostsjinja.j2 
+        dest: '/etc/hosts.ansible' 
+        owner: root 
+        group: root 
+        mode: 0644
+
+    - name: "check if debian generated hosts file has a backup"
+      stat: 
+        path: "/etc/hosts.debian"
+      register: etc_hosts_debian
+
+    - name: "backup debian generated /etc/hosts"
+      command: "cp /etc/hosts /etc/hosts.debian"
+      when: etc_hosts_debian.stat.islnk is not defined
+
+    - name: "install /etc/hosts.ansible file"
+      command: "cp /etc/hosts.ansible /etc/hosts"
+      become: true

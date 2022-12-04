@@ -1,0 +1,37 @@
+Host 18.234.154.241
+User ubuntu
+Hostname 18.234.154.241
+ProxyJump ubuntu@bastion
+IdentityFile ../Upgrad_NEW.pem
+StrictHostKeyChecking no
+Host bastion
+User ubuntu
+Hostname 18.234.154.241
+IdentityFile ../Upgrad_NEW.pem
+StrictHostKeyChecking no
+
+Host jenkins
+HostName 10.0.101.229
+User ubuntu
+IdentityFile ../Upgrad_NEW.pem
+ProxyJump ubuntu@bastion
+StrictHostKeyChecking no
+Host 10.0.101.229
+HostName 10.0.101.229
+User ubuntu
+IdentityFile ../Upgrad_NEW.pem
+ProxyJump ubuntu@bastion
+StrictHostKeyChecking no
+
+Host app
+HostName 10.0.2.11
+User ubuntu
+IdentityFile ../Upgrad_NEW.pem
+ProxyJump ubuntu@bastion
+StrictHostKeyChecking no
+Host 10.0.2.11
+HostName 10.0.2.11
+User ubuntu
+IdentityFile ../Upgrad_NEW.pem
+ProxyJump ubuntu@bastion
+StrictHostKeyChecking no

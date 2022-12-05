@@ -24,14 +24,22 @@ This is the Course Assignment for the module of **CI/CD Pipelining, Kubernetes a
 6. Install _Docker_ using the `setup.yml` Ansible Playbook in `\ansible-playbook` directory.
 7. Get the Public URL on Application Load Balancer.
 8. Use `https://<PUBLICURL/>:80/jenkins` to start the **Jenkins EC2 Instance** using Application Load Balancer.
-9. Build a pipeline in Jenkins:
--- Create a New Item in Jenkins.
--- Enter pipeline details.
--- Configure the parameters of Jenkins Pipeline.
--- Use SCM as "GIT" and enter the sample url of Docker Sample Code Repository.
--- Configure the credentials of Github.
--- Deploy the Jenkins Pipeline.
--- The Node App will be successfully deployed on the URL: `https://<PUBLICURL/>:80/app` to start the app.
+9. Build a pipeline in Jenkins.
+
+#### How to Build Pipeline in Jenkins?
+
+- Create a New Item in Jenkins.
+- Enter pipeline details.
+- Configure the parameters of Jenkins Pipeline.
+- Use SCM as "GIT" and enter the sample url of Docker Sample Code Repository.
+- Configure the credentials of Github.
+- Deploy the Jenkins Pipeline.
+- The Node App will be successfully deployed on the URL: `https://<PUBLICURL/>:80/app` to start the app.
+
+10. After succesfully deploying the App. We can destroy the entire AWS Infrastructure coded via Terraform by running: `terraform destroy`.
+
+**[⚠️ NOTE]**
+Terraform Destroy will completely wipeout the resources and services that were created using Terraform.
 
 ### Sample Code Repository
 

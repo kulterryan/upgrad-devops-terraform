@@ -1,6 +1,9 @@
 ---
-- hosts: all
+- hosts: 
+    - jenkins
+    - app
   become: true
+
   tasks:
     - name: Install aptitude
       apt:
@@ -8,7 +11,7 @@
         state: latest
         update_cache: true
 
-    - name: Install required system packages
+    - name: Install pre-requisite system packages
       apt:
         pkg:
           - apt-transport-https
@@ -18,10 +21,12 @@
           - python3-pip
           - virtualenv
           - python3-setuptools
+          - awscli
+          - openjdk-11-jre
         state: latest
         update_cache: true
 
-    - name: Add Docker GPG apt Key
+    - name: Add Docker GPG Key
       apt_key:
         url: https://download.docker.com/linux/ubuntu/gpg
         state: present
@@ -33,10 +38,14 @@
 
     - name: Update apt and install docker-ce
       apt:
-        name: docker-ce
+        pkg:
+          - docker-ce
+          - docker-ce-cli
         state: latest
         update_cache: true
-
-    - name: Install Docker Module for Python
-      pip:
+ 
+    - name: Start docker deamon
+      service:
         name: docker
+        state: started
+        enabled: true
